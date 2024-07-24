@@ -1,0 +1,98 @@
+package io.github.adithya2306.graphicaleq.ui
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import io.github.adithya2306.graphicaleq.data.BandGain
+
+@Composable
+fun BandGainSlider(
+    bandGain: BandGain,
+    onValueChangeFinished: (Float) -> Unit
+) {
+    // Gain range is of -1->1 in UI, -100->100 in backend,
+    // but actually is -12->12 dB
+    var sliderPosition by remember {
+        mutableFloatStateOf(bandGain.gain / 100f)
+    }
+    // ensure we update the slider when gain is changed,
+    // for eg. when changing the preset
+    LaunchedEffect(bandGain.gain) {
+        sliderPosition = bandGain.gain / 100f
+    }
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        SliderText(
+            "%.1f".format(sliderPosition * 12f)
+        )
+        Slider(
+            value = sliderPosition,
+            onValueChange = { sliderPosition = it },
+            onValueChangeFinished = {
+                onValueChangeFinished(sliderPosition * 100f)
+            },
+            valueRange = -1f..1f,
+            modifier = Modifier
+                .graphicsLayer {
+                    rotationZ = 270f
+                    transformOrigin = TransformOrigin(0f, 0f)
+                }
+                .layout { measurable, constraints ->
+                    val placeable = measurable.measure(
+                        Constraints(
+                            minWidth = constraints.minHeight,
+                            maxWidth = constraints.maxHeight,
+                            minHeight = constraints.minWidth,
+                            maxHeight = constraints.maxHeight,
+                        )
+                    )
+                    layout(placeable.height, placeable.width) {
+                        placeable.place(-placeable.width, 0)
+                    }
+                }
+                // horizontal and vertical dimensions are inverted due to rotation
+                .width(200.dp)
+                .height(40.dp)
+                .padding(horizontal = 8.dp)
+        )
+        SliderText(
+            with(bandGain.band) {
+                if (this >= 1000) {
+                    "${this / 1000}k"
+                } else {
+                    "$this"
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun SliderText(
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = text,
+        modifier = modifier,
+        fontSize = 12.sp
+    )
+}
