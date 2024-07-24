@@ -71,7 +71,7 @@ fun BandGainSlider(
                 // horizontal and vertical dimensions are inverted due to rotation
                 .width(200.dp)
                 .height(40.dp)
-                .padding(horizontal = 8.dp)
+                .padding(8.dp)
         )
         SliderText(
             with(bandGain.band) {
