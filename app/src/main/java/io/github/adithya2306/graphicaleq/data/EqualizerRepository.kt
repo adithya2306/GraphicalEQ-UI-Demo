@@ -5,6 +5,7 @@ import android.util.Log
 import io.github.adithya2306.graphicaleq.R
 import io.github.adithya2306.graphicaleq.utils.PREF_KEY
 import io.github.adithya2306.graphicaleq.utils.TAG
+import io.github.adithya2306.graphicaleq.utils.dlog
 import io.github.adithya2306.graphicaleq.utils.tenBandFreqs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -49,13 +50,13 @@ class EqualizerRepository(context: Context) {
                 bandGains = bandGains
             )
         }.also {
-            Log.i(TAG, "getPreset: $it")
+            dlog(TAG, "getPreset: $it")
         }
     }
 
     suspend fun setPreset(preset: Preset) = withContext(Dispatchers.IO) {
         // INSERT AUDIO EFFECT BACKEND LOGIC HERE
-        Log.d(TAG, "setPreset: $preset")
+        dlog(TAG, "setPreset: $preset")
         sharedPreferences.edit()
             .putString(
                 PREF_KEY,
