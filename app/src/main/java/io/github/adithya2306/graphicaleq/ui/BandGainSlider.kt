@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -28,15 +27,13 @@ fun BandGainSlider(
     onValueChangeFinished: (Float) -> Unit
 ) {
     // Gain range is of -1->1 in UI, -100->100 in backend,
-    // but actually is -12->12 dB
-    var sliderPosition by remember {
+    // but actually is -12->12 dB.
+    // Ensure we update the slider when gain is changed,
+    // for eg. when changing the preset
+    var sliderPosition by remember(bandGain.gain) {
         mutableFloatStateOf(bandGain.gain / 100f)
     }
-    // ensure we update the slider when gain is changed,
-    // for eg. when changing the preset
-    LaunchedEffect(bandGain.gain) {
-        sliderPosition = bandGain.gain / 100f
-    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
