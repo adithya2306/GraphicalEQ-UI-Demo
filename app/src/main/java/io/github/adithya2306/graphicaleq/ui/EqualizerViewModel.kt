@@ -27,7 +27,7 @@ class EqualizerViewModel(
     private val _preset = MutableStateFlow(repository.defaultPreset)
     val preset = _preset.asStateFlow()
 
-    var presetRestored = false
+    private var presetRestored = false
 
     init {
         // Update the list of presets: combined list of user defined presets if any,
@@ -106,37 +106,43 @@ class EqualizerViewModel(
         }
     }
 
-    private fun validatePresetName(name: String): Boolean {
+    // Returns string containing the error message if it failed, otherwise null
+    private fun validatePresetName(name: String): String? {
         // Ensure we don't have another preset with the same name
-        return !_presets.value
+        return if (
+            _presets.value
             .any { it.name.equals(name.trim(), ignoreCase = true) }
+        ) {
+            "Preset name already exists!"
+        } else if (name.length > 50) {
+            "Preset name is too long!"
+        } else null
     }
 
-    fun createNewPreset(name: String): Boolean {
+    fun createNewPreset(name: String): String? {
         dlog(TAG, "createNewPreset($name)")
-        if (!validatePresetName(name)) {
-            dlog(TAG, "createNewPreset: $name already exists")
-            return false
+        validatePresetName(name)?.let {
+            dlog(TAG, "createNewPreset failed: $it")
+            return it
         }
         _preset.value = _preset.value.copy(
             name = name.trim(),
             isUserDefined = true,
             isMutated = false
         )
-        return true
+        return null
     }
 
-    fun renamePreset(preset: Preset, name: String): Boolean {
+    fun renamePreset(preset: Preset, name: String): String? {
         dlog(TAG, "renamePreset($preset, $name)")
-        if (!validatePresetName(name)) {
-            dlog(TAG, "renamePreset: $name already exists")
-            return false
-        }
         // create a preset with the new name and same gains
-        createNewPreset(name = name)
+        createNewPreset(name = name)?.let {
+            dlog(TAG, "renamePreset failed")
+            return it
+        }
         // and delete the old one.
         deletePreset(preset, shouldReset = false)
-        return true
+        return null
     }
 
     fun deletePreset(preset: Preset, shouldReset: Boolean = true) {
@@ -145,7 +151,7 @@ class EqualizerViewModel(
             repository.removePreset(preset)
         }
         if (shouldReset) {
-            reset()
+            _preset.value = repository.defaultPreset
         }
     }
 

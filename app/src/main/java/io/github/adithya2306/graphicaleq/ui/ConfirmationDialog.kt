@@ -10,13 +10,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 
 @Composable
-fun DeletePresetDialog(
+fun ConfirmationDialog(
+    text: String,
     onConfirm: () -> Unit,
-    onDismissDialog: () -> Unit
+    onDismiss: () -> Unit
 ) {
     var showDialog by remember { mutableStateOf(true) }
     if (!showDialog) {
-        onDismissDialog()
+        onDismiss()
         return
     }
 
@@ -40,7 +41,7 @@ fun DeletePresetDialog(
             }
         },
         text = {
-            Text("Do you want to delete this preset?")
+            Text(text)
         }
     )
 }

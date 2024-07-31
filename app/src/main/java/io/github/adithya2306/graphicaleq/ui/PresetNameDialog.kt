@@ -1,6 +1,7 @@
 package io.github.adithya2306.graphicaleq.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,7 +27,7 @@ import androidx.compose.ui.window.Dialog
 @Composable
 fun PresetNameDialog(
     presetName: String = "",
-    onPresetNameSet: (String) -> Boolean,
+    onPresetNameSet: (String) -> String?,
     onDismissDialog: () -> Unit
 ) {
     var showDialog by remember { mutableStateOf(true) }
@@ -35,56 +36,61 @@ fun PresetNameDialog(
         return
     }
     var text by remember { mutableStateOf(presetName) }
-    var isError by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
 
     Dialog(
         onDismissRequest = { showDialog = false }
     ) {
         Card(
-            shape = RoundedCornerShape(size = 16.dp),
+            shape = RoundedCornerShape(size = 24.dp),
             modifier = Modifier
                 .padding(8.dp)
                 .fillMaxWidth()
                 .wrapContentHeight()
         ) {
-            OutlinedTextField(
-                value = text,
-                onValueChange = { text = it },
-                label = { Text("Preset name") },
-                isError = isError,
-                singleLine = true,
-                modifier = Modifier.padding(16.dp)
-            )
-            if (isError) {
-                Text(
-                    "Preset name already exists!",
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
-                )
-            }
-            Row(
-                modifier = Modifier
-                    .height(IntrinsicSize.Min)
-                    .align(Alignment.End)
-                    .padding(end = 8.dp, bottom = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(space = 8.dp)
+            Column(
+                modifier = Modifier.padding(24.dp)
             ) {
-                TextButton(
-                    onClick = { showDialog = false }
-                ) {
-                    Text("Cancel")
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    label = { Text("Preset name") },
+                    isError = error != null,
+                    singleLine = true
+                )
+                error?.let {
+                    Text(
+                        text = it,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
                 }
-                TextButton(
-                    onClick = {
-                        if (onPresetNameSet(text)) {
-                            showDialog = false
-                            isError = false
-                        } else { // validation failed
-                            isError = true
-                        }
-                    }
+                Row(
+                    modifier = Modifier
+                        .height(IntrinsicSize.Min)
+                        .align(Alignment.End)
+                        .padding(top = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(space = 8.dp)
                 ) {
-                    Text("OK")
+                    TextButton(
+                        onClick = { showDialog = false }
+                    ) {
+                        Text("Cancel")
+                    }
+                    TextButton(
+                        onClick = {
+                            onPresetNameSet(text)?.let {
+                                // validation failed
+                                error = it
+                                return@TextButton
+                            }
+                            // succeeded
+                            showDialog = false
+                            error = null
+                        }
+                    ) {
+                        Text("OK")
+                    }
                 }
             }
         }

@@ -4,3 +4,4 @@
 
 - ~~Allow creating custom presets~~
 - Integrate with backend
+- Performance profiling

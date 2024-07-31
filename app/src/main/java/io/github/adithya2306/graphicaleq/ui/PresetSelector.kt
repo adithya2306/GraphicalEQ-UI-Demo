@@ -36,14 +36,13 @@ fun PresetSelector(viewModel: EqualizerViewModel) {
     var expanded by remember { mutableStateOf(false) }
     var showNewPresetDialog by remember { mutableStateOf(false) }
     var showRenamePresetDialog by remember { mutableStateOf(false) }
-    var showDeletePresetDialog by remember { mutableStateOf(false) }
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    var showResetConfirmDialog by remember { mutableStateOf(false) }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(
-                bottom = 24.dp
-            ),
+            .padding(bottom = 24.dp),
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -100,7 +99,7 @@ fun PresetSelector(viewModel: EqualizerViewModel) {
             TooltipIconButton(
                 icon = Icons.Default.Delete,
                 text = "Delete preset",
-                onClick = { showDeletePresetDialog = true }
+                onClick = { showDeleteConfirmDialog = true }
             )
         }
 
@@ -109,7 +108,13 @@ fun PresetSelector(viewModel: EqualizerViewModel) {
                 id = R.drawable.reset_settings_24px
             ),
             text = "Reset gains",
-            onClick = { viewModel.reset() }
+            onClick = {
+                if (currentPreset.isUserDefined) {
+                    showResetConfirmDialog = true
+                } else {
+                    viewModel.reset()
+                }
+            }
         )
     }
 
@@ -126,6 +131,7 @@ fun PresetSelector(viewModel: EqualizerViewModel) {
 
     if (showRenamePresetDialog) {
         PresetNameDialog(
+            presetName = currentPreset.name,
             onPresetNameSet = {
                 return@PresetNameDialog viewModel.renamePreset(
                     preset = currentPreset,
@@ -136,10 +142,19 @@ fun PresetSelector(viewModel: EqualizerViewModel) {
         )
     }
 
-    if (showDeletePresetDialog) {
-        DeletePresetDialog(
+    if (showDeleteConfirmDialog) {
+        ConfirmationDialog(
+            text = "Do you want to delete this preset?",
             onConfirm = { viewModel.deletePreset(currentPreset) },
-            onDismissDialog = { showDeletePresetDialog = false }
+            onDismiss = { showDeleteConfirmDialog = false }
+        )
+    }
+
+    if (showResetConfirmDialog) {
+        ConfirmationDialog(
+            text = "Do you want to reset this preset to defaults?",
+            onConfirm = { viewModel.reset() },
+            onDismiss = { showResetConfirmDialog = false }
         )
     }
 }
