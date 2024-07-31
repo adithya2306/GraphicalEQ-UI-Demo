@@ -1,4 +1,4 @@
-package io.github.adithya2306.graphicaleq.utils
+package io.github.adithya2306.graphicaleq.util
 
 import android.util.Log
 import io.github.adithya2306.graphicaleq.BuildConfig

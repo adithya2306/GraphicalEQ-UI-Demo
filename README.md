@@ -2,5 +2,5 @@
 
 ## TODO
 
-- Allow creating custom presets
+- ~~Allow creating custom presets~~
 - Integrate with backend

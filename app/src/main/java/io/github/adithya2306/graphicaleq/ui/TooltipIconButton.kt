@@ -12,28 +12,26 @@ import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
-import io.github.adithya2306.graphicaleq.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ResetButton(
+fun TooltipIconButton(
+    icon: ImageVector,
+    text: String,
     onClick: () -> Unit
 ) {
     TooltipBox(
         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-        tooltip = { PlainTooltip { Text("Reset") } },
+        tooltip = { PlainTooltip { Text(text) } },
         state = rememberTooltipState()
     ) {
         IconButton(
             onClick = onClick
         ) {
             Icon(
-                imageVector = ImageVector.vectorResource(
-                    id = R.drawable.reset_settings_24px
-                ),
-                contentDescription = "Reset",
+                imageVector = icon,
+                contentDescription = text,
                 modifier = Modifier.size(24.dp)
             )
         }

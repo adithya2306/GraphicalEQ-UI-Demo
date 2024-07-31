@@ -1,4 +1,4 @@
-package io.github.adithya2306.graphicaleq.utils
+package io.github.adithya2306.graphicaleq.util
 
 const val TAG = "GraphicalEQ"
 const val PREF_KEY = "geq_preset"

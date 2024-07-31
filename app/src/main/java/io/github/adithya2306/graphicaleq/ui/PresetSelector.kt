@@ -4,6 +4,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -19,14 +23,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
+import io.github.adithya2306.graphicaleq.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PresetSelector(viewModel: EqualizerViewModel) {
-    val presets = remember { viewModel.presets }
+    val presets by viewModel.presets.collectAsState()
     val currentPreset by viewModel.preset.collectAsState()
     var expanded by remember { mutableStateOf(false) }
+    var showNewPresetDialog by remember { mutableStateOf(false) }
+    var showRenamePresetDialog by remember { mutableStateOf(false) }
+    var showDeletePresetDialog by remember { mutableStateOf(false) }
 
     Row(
         modifier = Modifier
@@ -41,7 +51,7 @@ fun PresetSelector(viewModel: EqualizerViewModel) {
             expanded = expanded,
             onExpandedChange = { expanded = !expanded },
             modifier = Modifier
-                .padding(end = 12.dp)
+                .padding(end = 8.dp)
                 .weight(1f)
         ) {
             TextField(
@@ -49,6 +59,7 @@ fun PresetSelector(viewModel: EqualizerViewModel) {
                 onValueChange = { },
                 readOnly = true,
                 label = { Text("Preset") },
+                singleLine = true,
                 trailingIcon = {
                     ExposedDropdownMenuDefaults.TrailingIcon(
                         expanded = expanded
@@ -73,8 +84,62 @@ fun PresetSelector(viewModel: EqualizerViewModel) {
                 }
             }
         }
-        ResetButton(
+
+        TooltipIconButton(
+            icon = Icons.Default.Add,
+            text = "New preset",
+            onClick = { showNewPresetDialog = true }
+        )
+
+        if (currentPreset.isUserDefined) {
+            TooltipIconButton(
+                icon = Icons.Default.Edit,
+                text = "Rename preset",
+                onClick = { showRenamePresetDialog = true }
+            )
+            TooltipIconButton(
+                icon = Icons.Default.Delete,
+                text = "Delete preset",
+                onClick = { showDeletePresetDialog = true }
+            )
+        }
+
+        TooltipIconButton(
+            icon = ImageVector.vectorResource(
+                id = R.drawable.reset_settings_24px
+            ),
+            text = "Reset gains",
             onClick = { viewModel.reset() }
+        )
+    }
+
+    // Dialogs
+
+    if (showNewPresetDialog) {
+        PresetNameDialog(
+            onPresetNameSet = {
+                return@PresetNameDialog viewModel.createNewPreset(name = it)
+            },
+            onDismissDialog = { showNewPresetDialog = false }
+        )
+    }
+
+    if (showRenamePresetDialog) {
+        PresetNameDialog(
+            onPresetNameSet = {
+                return@PresetNameDialog viewModel.renamePreset(
+                    preset = currentPreset,
+                    name = it
+                )
+            },
+            onDismissDialog = { showRenamePresetDialog = false }
+        )
+    }
+
+    if (showDeletePresetDialog) {
+        DeletePresetDialog(
+            onConfirm = { viewModel.deletePreset(currentPreset) },
+            onDismissDialog = { showDeletePresetDialog = false }
         )
     }
 }
