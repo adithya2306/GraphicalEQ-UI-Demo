@@ -122,6 +122,7 @@ fun PresetSelector(viewModel: EqualizerViewModel) {
 
     if (showNewPresetDialog) {
         PresetNameDialog(
+            title = "New preset",
             onPresetNameSet = {
                 return@PresetNameDialog viewModel.createNewPreset(name = it)
             },
@@ -131,6 +132,7 @@ fun PresetSelector(viewModel: EqualizerViewModel) {
 
     if (showRenamePresetDialog) {
         PresetNameDialog(
+            title = "Rename preset",
             presetName = currentPreset.name,
             onPresetNameSet = {
                 return@PresetNameDialog viewModel.renamePreset(
