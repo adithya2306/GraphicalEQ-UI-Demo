@@ -19,10 +19,11 @@ fun TooltipIconButton(
     onClick: () -> Unit
 ) {
     PlainTooltipBox(
-        tooltip = { Text("Reset") }
+        tooltip = { Text(text) }
     ) {
         IconButton(
-            onClick = onClick
+            onClick = onClick,
+            modifier = Modifier.tooltipTrigger()
         ) {
             Icon(
                 imageVector = icon,
