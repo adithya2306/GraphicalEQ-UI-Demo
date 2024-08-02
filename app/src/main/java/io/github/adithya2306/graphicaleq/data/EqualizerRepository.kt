@@ -1,22 +1,15 @@
 package io.github.adithya2306.graphicaleq.data
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import io.github.adithya2306.graphicaleq.R
-import io.github.adithya2306.graphicaleq.util.PREF_KEY
 import io.github.adithya2306.graphicaleq.util.dlog
-import io.github.adithya2306.graphicaleq.util.tenBandFreqs
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.withContext
-
-val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "presets")
 
 class EqualizerRepository(
     private val context: Context
@@ -25,9 +18,16 @@ class EqualizerRepository(
     // Preset is saved as a string of comma separated gains in SharedPreferences
     // and is unique to each profile ID
     private var profile = 0 // must be fetched from backend
-    private val sharedPreferences by lazy {
+    private val profileSharedPrefs by lazy {
         context.getSharedPreferences(
             "profile_$profile",
+            Context.MODE_PRIVATE
+        )
+    }
+
+    private val presetsSharedPrefs by lazy {
+        context.getSharedPreferences(
+            "presets",
             Context.MODE_PRIVATE
         )
     }
@@ -58,22 +58,36 @@ class EqualizerRepository(
         }
     }
 
-    // User defined presets are stored in a PreferenceDataStore as
+    // User defined presets are stored in a SharedPreferences as
     // key - preset name
     // value - comma separated string of gains
-    val userPresets: Flow<List<Preset>> = context.dataStore.data
-        .map { prefs ->
-            prefs.asMap().map { (key, value) ->
-                Preset(
-                    name = key.name,
-                    bandGains = deserializeGains(value.toString()),
-                    isUserDefined = true
-                )
-            }
+    val userPresets: Flow<List<Preset>> = callbackFlow {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
+            dlog(TAG, "presetsSharedPrefs changed")
+            trySend(
+                presetsSharedPrefs.all.map { (key, value) ->
+                    Preset(
+                        name = key,
+                        bandGains = deserializeGains(value.toString()),
+                        isUserDefined = true
+                    )
+                }
+            )
         }
 
+        presetsSharedPrefs.registerOnSharedPreferenceChangeListener(listener)
+        dlog(TAG, "presetsSharedPrefs registered listener")
+        // trigger an initial emission
+        listener.onSharedPreferenceChanged(presetsSharedPrefs, null)
+
+        awaitClose {
+            presetsSharedPrefs.unregisterOnSharedPreferenceChangeListener(listener)
+            dlog(TAG, "presetsSharedPrefs unregistered listener")
+        }
+    }
+
     suspend fun getBandGains(): List<BandGain> = withContext(Dispatchers.IO) {
-        val gains = sharedPreferences.getString(PREF_KEY, "")
+        val gains = profileSharedPrefs.getString(PREF_KEY, "")
         return@withContext if (gains.isNullOrEmpty()) {
             defaultPreset.bandGains
         } else {
@@ -86,7 +100,7 @@ class EqualizerRepository(
     suspend fun setBandGains(bandGains: List<BandGain>) = withContext(Dispatchers.IO) {
         // INSERT AUDIO EFFECT BACKEND LOGIC HERE
         dlog(TAG, "setBandGains($bandGains)")
-        sharedPreferences.edit()
+        profileSharedPrefs.edit()
             .putString(
                 PREF_KEY,
                 serializeGains(bandGains)
@@ -96,20 +110,34 @@ class EqualizerRepository(
 
     suspend fun addPreset(preset: Preset) = withContext(Dispatchers.IO) {
         dlog(TAG, "addPreset($preset)")
-        context.dataStore.edit { prefs ->
-            prefs[stringPreferencesKey(preset.name)] = serializeGains(preset.bandGains)
-        }
+        presetsSharedPrefs.edit()
+            .putString(preset.name, serializeGains(preset.bandGains))
+            .apply()
     }
 
     suspend fun removePreset(preset: Preset) = withContext(Dispatchers.IO) {
         dlog(TAG, "removePreset($preset)")
-        context.dataStore.edit { prefs ->
-            prefs.remove(stringPreferencesKey(preset.name))
-        }
+        presetsSharedPrefs.edit()
+            .remove(preset.name)
+            .apply()
     }
 
     private companion object {
         const val TAG = "EqRepository"
+        const val PREF_KEY = "geq_preset"
+
+        val tenBandFreqs = intArrayOf(
+            32,
+            64,
+            125,
+            250,
+            500,
+            1000,
+            2000,
+            4000,
+            8000,
+            16000
+        )
 
         fun deserializeGains(bandGains: String): List<BandGain> {
             val gains: List<Float> =
